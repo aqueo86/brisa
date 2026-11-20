@@ -1,0 +1,7 @@
+import {getChatGPTUser} from '../../chatgpt-auth';
+import {database} from '../../../db/raw';
+import {saveProfile} from '../../../lib/profile-store';
+import {profileError} from '../../../lib/profile';
+export const dynamic='force-dynamic';
+export async function GET(){const u=await getChatGPTUser();if(!u)return Response.json({profile:null},{headers:{'Cache-Control':'no-store'}});try{const p=await database().prepare('SELECT data,updated_at FROM profiles WHERE owner = ?').bind(u.userId).first<{data:string;updated_at:string}>();return Response.json({profile:p?JSON.parse(p.data):null,updated_at:p?.updated_at},{headers:{'Cache-Control':'no-store'}});}catch{return Response.json({error:'No pudimos cargar tu perfil.'},{status:503});}}
+export async function POST(request:Request){if(request.headers.get('origin')!==new URL(request.url).origin)return Response.json({error:'Solicitud no permitida.'},{status:403});const u=await getChatGPTUser();if(!u)return Response.json({error:'Inicia sesión para guardar tu perfil.'},{status:401});try{const raw=await request.text();if(raw.length>12000)return Response.json({error:'Perfil demasiado largo.'},{status:413});const data=JSON.parse(raw);const error=profileError(data);if(error)return Response.json({error},{status:400});const updated_at=await saveProfile(u.userId,data);return Response.json({ok:true,updated_at});}catch{return Response.json({error:'No se guardó tu perfil. Reintenta sin cerrar el formulario.'},{status:503});}}

@@ -1,0 +1,35 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'co.brisa.finanzas'
+ compileSdk 35
+ defaultConfig {
+   applicationId 'co.brisa.finanzas'
+   minSdk 23
+   targetSdk 35
+   versionCode 1
+   versionName '1.0'
+ }
+ signingConfigs {
+   release {
+     if (file('release.keystore').exists()) {
+       storeFile file('release.keystore')
+       storePassword 'brisa2026'
+       keyAlias 'brisa'
+       keyPassword 'brisa2026'
+     }
+   }
+ }
+ buildTypes {
+   release {
+     if (file('release.keystore').exists()) {
+       signingConfig signingConfigs.release
+     }
+     minifyEnabled false
+   }
+ }
+ compileOptions {
+   sourceCompatibility JavaVersion.VERSION_17
+   targetCompatibility JavaVersion.VERSION_17
+ }
+}
+dependencies { implementation 'androidx.browser:browser:1.8.0' }

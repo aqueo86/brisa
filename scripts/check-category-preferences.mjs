@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';
+const base='http://localhost:5173';const login=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});const headers={Cookie:login.headers.get('set-cookie').split(';')[0],Origin:base,'Content-Type':'application/json'};
+async function call(body){const r=await fetch(base+'/api/finance',{headers,...(body?{method:'POST',body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json()};}
+const original=(await call()).data.preferences;
+const settings={expense:{mode:'favorites',favorites:['Tecnología','Seguros','Servicios públicos']},income:{mode:'frequent',favorites:['Bonificaciones','Dividendos']}};
+try{assert.equal((await call({action:'preferences',data:{...original,categorySettings:settings}})).status,200);assert.deepEqual((await call()).data.preferences.categorySettings,settings);assert.equal((await call({action:'preferences',data:{...original,categorySettings:{...settings,expense:{mode:'favorites',favorites:[]}}}})).status,400);assert.deepEqual((await call()).data.preferences.categorySettings,settings);
+for(const [kind,category] of [['expense','Tecnología'],['expense','Seguros'],['expense','Trabajo'],['expense','Servicios públicos'],['income','Bonificaciones'],['income','Dividendos']]){const id='category-qa-'+crypto.randomUUID();try{assert.equal((await call({action:'save',data:{id,kind,category,description:'Prueba local categorías',amount:1000,date:'2026-09-22',account:'Efectivo',source:'Manual'}})).status,200);}finally{await call({action:'delete',id});}}
+console.log('PASS category preferences persist, invalid favorites rejected, new expense/income categories accepted.');}finally{assert.equal((await call({action:'preferences',data:original})).status,200);}

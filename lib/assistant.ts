@@ -1,0 +1,3 @@
+import {z} from 'zod';
+import {expenseCategories,incomeCategories,paymentMethods,incomeAccounts} from './categories';
+export const assistantResult=z.object({reply:z.string().max(2000),movement:z.object({kind:z.enum(['income','expense']),description:z.string().trim().min(1).max(140),amount:z.number().int().positive().max(1e12),category:z.string(),date:z.string().regex(/^20\d{2}-\d{2}-\d{2}$/).refine(d=>Number.isFinite(Date.parse(d))&&new Date(d).toISOString().slice(0,10)===d),account:z.string().trim().min(1).max(60)}).refine(m=>(m.kind==='income'?incomeCategories:expenseCategories).includes(m.category)&&(m.kind==='income'?incomeAccounts:paymentMethods).includes(m.account)).nullable()});

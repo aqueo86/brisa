@@ -1,0 +1,6 @@
+{
+ "id":"/", "name":"Brisa · Finanzas personales", "short_name":"Brisa", "lang":"es-CO",
+ "description":"Tus ingresos, gastos fijos y metas, todos los días.",
+ "start_url":"/", "scope":"/", "display":"standalone", "background_color":"#f6f8f7", "theme_color":"#287c60",
+ "icons":[{"src":"/icons/brisa-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"/icons/brisa-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]
+}
