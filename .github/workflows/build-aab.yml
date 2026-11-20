@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-aab:
     name: Compilar Android App Bundle (.aab)
@@ -25,16 +28,28 @@ jobs:
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Generar Keystore de firma de lanzamiento
+      - name: Generar Keystore permanente si no existe
         run: |
-          keytool -genkey -v -keystore android/app/release.keystore \
-            -alias brisa \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass brisa2026 \
-            -keypass brisa2026 \
-            -dname "CN=Brisa Finanzas, OU=Mobile, O=Brisa, L=Bogota, ST=Cundinamarca, C=CO"
+          if [ ! -f android/app/release.keystore ]; then
+            keytool -genkey -v -keystore android/app/release.keystore \
+              -alias brisa \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass brisa2026 \
+              -keypass brisa2026 \
+              -dname "CN=Brisa Finanzas, OU=Mobile, O=Brisa, L=Bogota, ST=Cundinamarca, C=CO"
+
+            keytool -export -rfc -keystore android/app/release.keystore \
+              -alias brisa -file android/app/upload_certificate.pem \
+              -storepass brisa2026
+
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -f android/app/release.keystore android/app/upload_certificate.pem
+            git commit -m "Guardar keystore permanente y upload_certificate.pem" || true
+            git push origin main || true
+          fi
 
       - name: Dar permisos de ejecución a Gradle Wrapper
         run: chmod +x android/gradlew
@@ -44,10 +59,12 @@ jobs:
           cd android
           ./gradlew bundleRelease --no-daemon --stacktrace
 
-      - name: Subir archivo AAB para descarga
+      - name: Subir archivo AAB y certificado para descarga
         uses: actions/upload-artifact@v4
         with:
           name: brisa-release-aab
-          path: android/app/build/outputs/bundle/release/*.aab
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/upload_certificate.pem
           if-no-files-found: error
           retention-days: 14
