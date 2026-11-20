@@ -24,9 +24,10 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Aceptar licencias de Android SDK
+      - name: Aceptar licencias e instalar Android SDK
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" || true
 
       - name: Generar Keystore permanente si no existe
         run: |
